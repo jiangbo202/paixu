@@ -1,0 +1,14 @@
+services:
+  game:
+    build: .
+    ports:
+      - "127.0.0.1:5173:5173"
+    volumes:
+      - game-data:/data
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+volumes:
+  game-data:

@@ -1,0 +1,10 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "paixu-web",
+  "main": "worker.js",
+  "compatibility_date": "2026-10-21",
+  "triggers": { "crons": ["17 3 * * *"] },
+  "assets": { "directory": "./dist", "binding": "ASSETS", "run_worker_first": ["/api/*"] },
+  "d1_databases": [{ "binding": "DB", "database_name": "paixu-db", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }],
+  "observability": { "enabled": false }
+}

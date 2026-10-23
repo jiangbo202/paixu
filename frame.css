@@ -1,0 +1,624 @@
+/* One viewport, a persistent dashboard and rack, and one bounded game surface. */
+html,body{width:100%;height:100%;overflow:hidden}
+#modal-root .modal-overlay{padding:12px}
+#modal-root .modal{display:flex;flex-direction:column;max-height:calc(100dvh - 24px);overflow:hidden}
+#modal-root .modal-header,#modal-root .modal>h2{flex-shrink:0}
+#modal-root .modal-body{min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin}
+#app{height:100%;min-height:0}
+#app .app-shell{--rack-h:clamp(68px,10dvh,104px);--hand-card-w:clamp(54px,7.8dvh,80px);--rule-h:48px;--hand-h:calc(var(--hand-card-w)*1.5 + var(--rule-h) + 102px);height:100dvh;min-height:0;max-width:1600px;padding:0 20px;display:grid;grid-template-rows:60px minmax(0,1fr) 24px}
+#app .app-shell>.topbar{height:auto;min-height:0;gap:12px}
+#app .app-shell>.game-grid{display:grid;grid-template-columns:clamp(210px,17vw,250px) minmax(0,1fr);grid-template-rows:minmax(0,1fr);gap:16px;padding:10px 0;min-height:0;overflow:visible}
+#app .app-shell>.footer{display:flex;height:auto;min-height:0;font-size:10px}
+#app .game-grid>.sidebar{height:100%;min-height:0;align-self:stretch;display:flex;flex-direction:column;gap:9px;padding:12px;overflow:auto;scrollbar-width:thin}
+#app .sidebar .blind-heading{flex:0 0 38px;min-height:38px;padding:0 0 6px}
+#app .sidebar .target-block{flex:0 0 50px;padding:5px 0;min-height:0}
+#app .sidebar .target-block>strong{font-size:32px}
+#app .sidebar .score-block{flex:0 0 84px;padding:7px 10px;min-height:0;margin:0}
+#app .sidebar .round-score{font-size:31px;line-height:1.6;white-space:nowrap}
+#app .sidebar .hand-score-block{display:block;flex:0 0 116px;min-height:116px;margin:0}
+#app .app-shell .sidebar .hand-score-block{display:block}
+#app .sidebar .hand-type{height:26px;margin:0 0 5px}
+#app .sidebar .hand-type>span{font-size:18px;white-space:nowrap}
+#app .sidebar .hand-type small{font-size:11px;white-space:nowrap}
+#app .sidebar .calculation{height:61px}
+#app .sidebar .chips-box,#app .sidebar .mult-box{padding:6px 8px}
+#app .sidebar .calculation b{font-size:25px;white-space:nowrap}
+#app .sidebar .estimated{height:24px;min-height:24px;line-height:1.2;flex-wrap:nowrap;font-size:11px;gap:4px}
+#app .sidebar .estimated b{font-size:15px}
+#app .sidebar .stat-grid{flex:0 0 86px;margin:0;min-height:86px;padding:0;grid-template-rows:44px 40px}
+#app .sidebar .stat{padding:4px!important;font-size:12px;gap:3px}
+#app .sidebar .stat>strong{font-size:22px}
+#app .sidebar .sidebar-buttons{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:31px 31px;gap:6px;margin:0;flex:0 0 68px}
+#app .sidebar-buttons .subtle-button{height:31px;min-height:0;padding:4px 6px;font-size:12px;white-space:nowrap}
+#app .sidebar-buttons .submit-slot{grid-column:1/-1;display:block;min-width:0;min-height:31px}
+#app .submit-slot>.submit-button{width:100%;font-size:11px}
+#app .sidebar .seed-button{display:flex;margin-top:auto;height:20px;min-height:20px;padding:0;font-size:10px;justify-content:center}
+#app .game-grid>.table{display:grid;grid-template-rows:calc(var(--rack-h) + 30px) minmax(0,1fr);gap:8px;min-height:0}
+#app .app-shell .inventory{--inventory-card-height:var(--rack-h);--joker-art-height:calc(var(--rack-h) - 36px);--item-card-height:calc(var(--rack-h) - 10px);--item-art-height:calc(var(--rack-h) - 40px);height:100%;min-height:0;padding:0;grid-template-columns:minmax(0,1fr) 80px 132px;gap:14px}
+#app .app-shell .inventory-heading{height:22px;min-height:22px;margin:0 0 6px}
+#app .app-shell .inventory .joker-rack{gap:8px;max-width:calc(var(--rack-h)*4 + 32px)}
+#app .app-shell .inventory .joker-card,#app .app-shell .inventory .empty-joker{height:var(--rack-h)}
+#app .app-shell .inventory .consumable-rack{min-height:var(--rack-h);height:var(--rack-h)}
+#app .app-shell .inventory .empty-consumable,#app .app-shell .inventory .consumable-slot>.consumable-card{height:var(--item-card-height);margin:0}
+#app .app-shell .inventory-bonuses{padding-top:28px;align-self:stretch}
+#app .app-shell .bonus-overview{max-height:var(--rack-h);overflow:hidden;padding:5px}
+#app .app-shell .bonus-overview-stats{gap:1px;margin-top:4px}
+#app .app-shell .bonus-overview-stats>span{font-size:11px;line-height:1.1}
+#app .table>.play-area{min-height:0;display:grid;grid-template-rows:minmax(0,1fr);border:1px solid #a1bd9238;border-radius:9px;background:radial-gradient(ellipse at center,#35684e32,#143c3010 75%);position:relative}
+#app .table>.play-area.with-hand{grid-template-rows:minmax(0,1fr) var(--hand-h)}
+#app .play-area>.arena,#app .table:has(.round-notice) .play-area>.arena{min-height:0;height:100%;border:0;background:none;box-shadow:none;overflow:hidden}
+#app .arena .arena-topline{height:27px;padding:8px 12px;font-size:11px;line-height:1}
+#app .arena>.arena-content,#app .table:has(.round-notice) .arena:has(.table-watermark)>.arena-content,#app .arena.is-scoring>.arena-content{height:100%;min-height:0;padding:31px 12px 8px;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin}
+#app .arena-content>.played-hand{margin:auto;flex:0 0 auto}
+#app .arena-content>.table-watermark h2{font-size:25px;margin:8px 0}
+#app .arena-content>.table-watermark p{font-size:13px}
+#app .arena-content .watermark-line{display:none}
+#app .arena-content .watermark-suits{font-size:25px}
+#app .play-area>.hand-panel{height:var(--hand-h);min-height:0;padding:6px 10px 8px;border-top:1px solid #a1bd9228;display:grid;grid-template-rows:24px var(--rule-h) minmax(0,1fr) 38px;gap:4px}
+#app .hand-panel .hand-toolbar,#app .hand-panel:has(.round-notice) .hand-toolbar{height:24px;min-height:0;margin:0}
+#app .hand-rule-slot{height:var(--rule-h);min-height:0;position:relative}
+#app .hand-rule-neutral{height:100%;display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid #9eb68b20;border-radius:6px;color:#b0c2a1;background:#92b48406;font-size:12px}
+.hand-rule-neutral>svg{width:19px;height:19px;flex-shrink:0;opacity:.65}
+#app .hand-panel .round-notice{height:100%;min-height:0;margin:0;padding:6px 9px;gap:8px;overflow:auto;scrollbar-width:thin;align-items:center;flex-wrap:nowrap;box-shadow:none}
+#app .hand-panel .round-notice:after{display:none}
+#app .hand-panel .rule-copy{gap:2px 8px;min-width:0}
+#app .hand-panel .rule-heading{font-size:10px;line-height:1.2}
+#app .hand-panel .rule-copy>strong{font-size:14px;line-height:1.3}
+#app .hand-panel .rule-copy p{font-size:12px;line-height:1.3}
+#app .hand-panel .round-notice.has-error .rule-copy>strong{display:none}
+#app .hand-panel .rule-symbol{flex-basis:23px;height:23px;font-size:15px}
+#app .hand-panel .rule-tags{flex-basis:auto;max-width:35%;padding:0;gap:4px;flex-wrap:wrap}
+#app .hand-panel .rule-tags>span,#app .hand-panel .rule-tags>b{font-size:10px;line-height:1.2}
+#app .hand-panel .rule-tags>b{padding:2px 4px}
+#app .hand-panel .hand-and-deck{height:100%;min-height:0;gap:15px}
+#app .hand-panel .hand-cards{height:100%;min-height:0;padding:20px 4px 4px;align-items:center}
+#app .hand-panel .hand-cards>.playing-card{width:var(--hand-card-w);max-width:var(--hand-card-w);height:auto;aspect-ratio:2/3;flex:0 1 var(--hand-card-w)}
+#app .hand-panel .draw-deck{width:35px;gap:6px;margin:0;flex-shrink:0}
+#app .hand-panel .deck-back{width:31px;height:44px}
+#app .hand-panel .deck-back i{width:22px;height:32px;font-size:20px}
+#app .hand-panel .hand-actions{height:38px;min-height:0;margin:0;gap:12px;flex-wrap:nowrap}
+#app .hand-panel .action-buttons{gap:8px}
+#app .hand-panel .action-buttons>.button{height:36px;min-height:0;padding:6px 12px;min-width:95px;font-size:14px}
+#app .hand-panel .selection-hint{height:32px;min-width:0;width:auto;margin:0;flex-wrap:nowrap;font-size:12px;gap:7px;justify-content:flex-end}
+#app .hand-panel .selection-hint b{font-size:14px;white-space:nowrap}
+#app .hand-panel .clear-selection{flex-shrink:0;width:25px;height:25px}
+#app .hand-panel .selection-hint>span{white-space:nowrap}
+
+/* Results and score animation use the same bounded stage. */
+#app .arena-content .result-panel{width:min(440px,100%);max-width:440px;padding:0 8px;flex-shrink:0;margin:auto}
+#app .result-panel .result-eyebrow{font-size:11px;letter-spacing:2px}
+#app .result-panel h2{font-size:24px;margin:6px 0;line-height:1.25}
+#app .result-panel>p{font-size:13px;line-height:1.5}
+#app .result-panel .result-score{font-size:30px;margin:6px 0;line-height:1.1}
+#app .result-panel .payout-lines{padding:5px 0;margin:7px 0}
+#app .result-panel .payout-lines>span{font-size:13px;padding:2px 0;line-height:1.3}
+#app .result-panel .payout-lines small{font-size:11px}
+#app .result-panel>.button{height:36px;min-height:36px;padding:7px 12px;font-size:14px}
+#app .result-panel .run-summary{margin:8px 0;padding:9px 0}
+#app .result-panel .run-summary>span{font-size:12px}
+#app .result-panel .text-button{padding:7px;font-size:12px}
+#app .arena .played-label{font-size:14px;margin:0 0 6px;line-height:1.2}
+#app .arena .played-cards{gap:9px}
+#app .arena .played-cards>.playing-card{width:clamp(36px,6dvh,60px);height:auto;aspect-ratio:2/3}
+#app .arena .last-result{margin-top:8px}
+#app .arena .last-result>span{font-size:26px}
+#app .arena .scoring-panel{margin:9px auto 0;width:min(420px,100%)}
+#app .arena .scoring-phases>span{font-size:11px;padding:4px 2px;line-height:1.2}
+#app .arena .scoring-event{min-height:32px;margin-top:4px;padding:6px 8px;font-size:13px}
+#app .arena .scoring-event>strong{font-size:14px}
+#app .arena .scoring-formula{padding:6px 0 3px;font-size:17px;gap:10px;line-height:1.2}
+#app .arena .scoring-formula>b{font-size:21px}
+#app .arena .scoring-controls button{padding:4px}
+#app .arena .scoring-controls{line-height:1.2}
+
+/* Selection and shop occupy the whole core surface; the surrounding frame stays put. */
+#app .arena>.blind-selection,#app .arena>.shop-content,#app .arena>.pack-selection{height:100%;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:35px 16px 12px}
+#app .arena .blind-selection{display:flex;flex-direction:column;justify-content:center}
+#app .arena .section-intro h2{font-size:24px;margin:0}
+#app .arena .section-intro p{font-size:13px;margin:6px 0 0}
+#app .arena .blind-choices{margin-top:16px;gap:12px}
+#app .arena .blind-choice{padding:10px 12px 6px}
+#app .arena .blind-choice .blind-badge.large{margin:10px auto}
+#app .arena .blind-choice p{min-height:42px;margin:7px 0;font-size:12px}
+#app .arena .starter-tip{margin-top:12px}
+#app .arena .shop-content{display:grid;grid-template-rows:40px minmax(0,1fr) 38px;gap:12px}
+#app .arena .shop-heading{margin:0;gap:10px}
+#app .arena .shop-heading>div{min-width:0;flex:1}
+#app .arena .shop-heading .next-round{flex-shrink:0}
+#app .arena .shop-heading h2{font-size:21px;margin:0;line-height:1.2}
+#app .arena .shop-heading .eyebrow{display:none}
+#app .arena .shop-layout{height:100%;min-height:0;grid-template-columns:minmax(0,1fr) 142px;gap:12px}
+#app .arena .shop-products{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;min-height:0}
+#app .arena .shop-item{padding:12px 9px;min-height:0;justify-content:center}
+#app .arena .shop-art{width:clamp(52px,8dvh,84px);height:clamp(72px,11dvh,116px);margin:0 0 8px}
+#app .arena .shop-item h3{font-size:15px;margin:6px 0 0;line-height:1.3}
+#app .arena .shop-item p{font-size:13px;line-height:1.45;min-height:38px;margin:7px 0;flex:0 0 auto}
+#app .arena .shop-item>.button{margin-top:auto;font-size:13px;min-height:34px;padding:6px 9px;width:100%}
+#app .arena .shop-item>.rarity,#app .arena .shop-item>h3,#app .arena .shop-item>.button{flex-shrink:0}
+#app .arena .shop-extras{min-height:0;gap:9px;flex-direction:column}
+#app .arena .voucher-offer{flex:1;min-height:0;padding:10px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+#app .arena .voucher-offer .voucher-graphic{width:44px;height:56px;margin:0;font-size:31px}
+#app .arena .voucher-offer h3{font-size:14px;margin:0}
+#app .arena .voucher-offer p{font-size:12px;margin:0;line-height:1.4}
+#app .arena .voucher-offer>.button{font-size:12px;min-height:32px;padding:6px 8px;margin-top:auto;width:100%}
+#app .arena .booster-offer{width:100%;padding:9px;gap:8px;min-height:60px}
+#app .arena .booster-offer b{font-size:12px}
+#app .arena .booster-offer small{font-size:11px}
+#app .arena .shop-footer{margin:0;padding:0;border:0;min-height:0;gap:10px}
+#app .arena .shop-footer>.button{font-size:13px;min-height:34px;padding:6px 10px}
+#app .arena .shop-footer>span{font-size:12px;max-width:none}
+#app .arena .pack-selection{display:flex;flex-direction:column;justify-content:center}
+#app .arena .pack-cards{width:100%;max-width:720px;margin:15px auto 8px;gap:12px;min-height:0;flex:1}
+#app .arena .pack-cards .shop-item p{flex:1}
+
+@media(min-width:681px) and (max-height:700px){
+  #app .app-shell{grid-template-rows:52px minmax(0,1fr) 20px;--rack-h:64px;--hand-card-w:50px;--rule-h:42px;--hand-h:211px}
+  #app .app-shell>.game-grid{padding:8px 0;gap:12px}
+  #app .game-grid>.sidebar{padding:9px;gap:5px}
+  #app .sidebar .blind-heading{flex-basis:30px;min-height:30px}
+  #app .sidebar .blind-heading h1{font-size:18px}
+  #app .sidebar .blind-heading .blind-badge{width:29px;height:29px}
+  #app .sidebar .blind-heading .blind-badge>span{width:23px;height:23px;font-size:17px}
+  #app .sidebar .target-block{flex-basis:40px}
+  #app .sidebar .target-block>strong{font-size:28px}
+  #app .sidebar .score-block{flex-basis:68px;padding:5px 8px}
+  #app .sidebar .round-score{font-size:27px;line-height:1.35}
+  #app .sidebar .hand-score-block{flex-basis:97px;min-height:97px}
+  #app .sidebar .hand-type{height:22px;margin-bottom:3px}
+  #app .sidebar .hand-type>span{font-size:16px}
+  #app .sidebar .calculation{height:48px}
+  #app .sidebar .calculation b{font-size:22px}
+  #app .sidebar .stat-grid{flex-basis:72px;min-height:72px;grid-template-rows:37px 33px}
+  #app .sidebar .stat>span{font-size:11px}
+  #app .sidebar .stat>strong{font-size:20px}
+  #app .sidebar .sidebar-buttons{flex-basis:62px;grid-template-rows:28px 28px}
+  #app .sidebar-buttons .subtle-button{height:28px;font-size:11px}
+  #app .app-shell .bonus-overview-stats{display:none}
+  #app .arena .scoring-phases{display:none}
+  #app .arena .played-cards>.playing-card{width:36px}
+  #app .result-panel h2{font-size:20px}
+  #app .result-panel .result-score{font-size:26px;margin:4px 0}
+  #app .result-panel .payout-lines{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;padding:5px 0;margin:5px 0}
+  #app .result-panel .payout-lines>span{flex-wrap:wrap;justify-content:center;gap:2px;font-size:11px}
+  #app .result-panel .payout-lines b{width:100%;font-size:14px}
+  #app .result-panel .payout-lines small{display:none}
+  #app .arena .section-intro h2{font-size:20px}
+  #app .arena .blind-choices{margin-top:10px}
+  #app .arena .blind-choice .blind-badge.large{width:39px;height:39px;margin:7px auto}
+  #app .arena .blind-choice .blind-badge.large>span{width:31px;height:31px;font-size:22px}
+  #app .arena .blind-target{font-size:25px;margin-top:3px}
+  #app .arena .blind-choice p{font-size:11px;min-height:32px;margin:4px 0}
+  #app .arena .blind-choice .button{min-height:31px;font-size:12px}
+  #app .arena .starter-tip{margin-top:8px}
+  #app .hand-panel .rule-heading,#app .hand-panel .round-notice:not(.has-error) .rule-copy p{display:none}
+}
+
+@media(max-width:1050px) and (min-width:681px){
+  #app .app-shell{padding:0 12px}
+  #app .app-shell>.game-grid{grid-template-columns:200px minmax(0,1fr);gap:12px}
+  #app .app-shell .inventory{grid-template-columns:minmax(0,1fr) 52px 100px;gap:8px}
+  #app .app-shell .inventory .joker-rack{gap:5px}
+  #app .app-shell .inventory .joker-card-name{font-size:10px;line-height:12px;min-height:25px}
+  #app .arena .shop-layout{grid-template-columns:minmax(0,1fr) 115px;gap:8px}
+  #app .arena .shop-item{padding:9px 6px}
+  #app .arena .shop-item h3{font-size:13px}
+  #app .arena .shop-item p{font-size:12px}
+  #app .hand-panel .selection-hint>span{font-size:11px}
+}
+
+@media(max-width:680px){
+  #app .app-shell{--rack-h:64px;--hand-card-w:clamp(48px,15vw,66px);--rule-h:56px;--hand-h:calc(var(--hand-card-w)*1.5 + var(--rule-h) + 103px);grid-template-rows:48px minmax(0,1fr);padding:0 8px max(6px,env(safe-area-inset-bottom))}
+  #app .app-shell>.footer{display:none}
+  #app .app-shell>.topbar{gap:4px}
+  #app .app-shell>.game-grid{grid-template-columns:minmax(0,1fr);grid-template-rows:170px minmax(0,1fr);gap:8px;padding:7px 0 0}
+  #app .game-grid>.sidebar,#app .app-shell:is([data-phase=blind],[data-phase=shop]) .sidebar{display:grid;grid-template-columns:1fr 1fr 1.15fr;grid-template-rows:25px 64px 36px 29px;gap:0 8px;padding:7px 9px;overflow:hidden}
+  #app .sidebar .blind-heading{grid-column:1;grid-row:1;min-height:0;height:25px;padding:0;margin:0;align-self:center}
+  #app .sidebar .blind-heading h1{font-size:15px;white-space:nowrap}
+  #app .sidebar .target-block{grid-column:1;grid-row:2;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:0;gap:2px}
+  #app .sidebar .target-block>span:first-child{font-size:11px}
+  #app .sidebar .target-block>strong{font-size:27px;line-height:1.1}
+  #app .sidebar .reward-label{display:none}
+  #app .sidebar .score-block{grid-column:2;grid-row:1/3;padding:6px;min-height:0;height:83px;align-self:stretch}
+  #app .sidebar .section-caption{font-size:11px}
+  #app .sidebar .round-score{font-size:27px;line-height:1.8}
+  #app .sidebar .hand-score-block{display:block;grid-column:3;grid-row:1/3;height:89px;min-height:0;margin:0}
+  #app .sidebar .hand-type{height:21px;margin:0 0 3px;gap:3px}
+  #app .sidebar .hand-type>span{font-size:13px}
+  #app .sidebar .hand-type small{font-size:10px}
+  #app .sidebar .calculation{height:42px;grid-template-columns:1fr 10px 1fr}
+  #app .sidebar .chips-box,#app .sidebar .mult-box{padding:3px 4px;gap:1px}
+  #app .sidebar .chips-box>span,#app .sidebar .mult-box>span{font-size:10px;line-height:1}
+  #app .sidebar .calculation b{font-size:20px;line-height:1.05}
+  #app .sidebar .estimated{height:17px;min-height:17px;margin-top:6px;font-size:10px;line-height:1.1}
+  #app .sidebar .estimated>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #app .sidebar .estimated b{font-size:12px}
+  #app .sidebar .stat-grid{grid-column:1/-1;grid-row:3;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:1fr;height:36px;min-height:0;margin:0;padding:3px 0 0;border:0}
+  #app .sidebar .stat,#app .sidebar .stat:nth-child(n){grid-column:auto;flex-direction:row;flex-wrap:wrap;justify-content:center;align-content:center;gap:1px 3px;padding:0 3px!important;border-left:1px solid #9eb68b20;line-height:1}
+  #app .sidebar .stat:first-child{border-left:0}
+  #app .sidebar .stat>span{font-size:10px;width:100%;text-align:center}
+  #app .sidebar .stat>strong{font-size:19px;line-height:1.15}
+  #app .sidebar .stat small{font-size:10px}
+  #app .sidebar .sidebar-buttons{grid-column:1/-1;grid-row:4;display:grid;grid-template-columns:1fr 1fr 1.35fr;grid-template-rows:27px;gap:5px;min-height:0;margin:2px 0 0}
+  #app .sidebar-buttons .subtle-button{min-height:0;height:27px;padding:3px 5px;font-size:11px}
+  #app .sidebar-buttons .submit-slot{grid-column:3;grid-row:1;min-height:0}
+  #app .sidebar .seed-button{display:none}
+  #app .game-grid>.table{grid-template-rows:calc(var(--rack-h) + 26px) minmax(0,1fr);gap:6px}
+  #app .app-shell .inventory{grid-template-columns:minmax(0,1fr) 34px 76px;gap:7px;--joker-art-height:calc(var(--rack-h) - 29px);--item-card-height:calc(var(--rack-h) - 4px);--item-art-height:calc(var(--rack-h) - 29px)}
+  #app .app-shell .inventory-heading{height:20px;min-height:20px;margin-bottom:4px;font-size:11px}
+  #app .app-shell .inventory-heading b,#app .app-shell .inventory-heading i{font-size:10px}
+  #app .app-shell .inventory .joker-rack{gap:4px}
+  #app .app-shell .inventory .joker-card-name{font-size:9px;line-height:11px;min-height:23px}
+  #app .app-shell .inventory .consumable-inventory{padding-left:5px}
+  #app .app-shell .inventory .consumable-card>span{font-size:9px;line-height:11px}
+  #app .app-shell .bonus-overview{padding:7px 0}
+  #app .play-area>.hand-panel{padding:5px 7px 6px;grid-template-rows:23px var(--rule-h) minmax(0,1fr) 34px;gap:3px}
+  #app .hand-panel .hand-toolbar{height:23px}
+  #app .hand-toolbar .section-caption,#app .hand-toolbar>div>b{font-size:12px}
+  #app .hand-panel .sort-control button{font-size:11px;height:25px;min-height:25px;padding:3px 7px}
+  #app .hand-rule-neutral{font-size:11px;padding:5px 7px}
+  #app .hand-panel .round-notice{padding:5px 7px;gap:6px}
+  #app .hand-panel .rule-symbol{height:20px;flex-basis:20px;font-size:13px}
+  #app .hand-panel .rule-copy>strong{font-size:12px;line-height:1.2}
+  #app .hand-panel .rule-copy p{font-size:11px;line-height:1.3}
+  #app .hand-panel .rule-heading{font-size:9px}
+  #app .hand-panel .rule-heading,#app .hand-panel .round-notice:not(.has-error) .rule-copy p{display:none}
+  #app .hand-panel .rule-tags{max-width:32%;gap:3px}
+  #app .hand-panel .rule-tags>span,#app .hand-panel .rule-tags>b{font-size:9px}
+  #app .hand-panel .hand-and-deck{gap:10px}
+  #app .hand-panel .hand-cards{--card-width:var(--hand-card-w);padding:20px 3px 9px}
+  #app .hand-panel .hand-cards>.playing-card{flex:0 0 var(--hand-card-w);max-width:none}
+  #app .hand-panel .hand-cards>button.playing-card.selected,#app .hand-panel .hand-cards>button.playing-card.selected:hover{transform:translateY(-15px)}
+  #app .hand-panel .draw-deck{width:25px;gap:5px}
+  #app .hand-panel .deck-back{width:23px;height:34px}
+  #app .hand-panel .deck-back i{width:16px;height:24px;font-size:15px}
+  #app .hand-panel .draw-deck>span:last-child{font-size:9px}
+  #app .hand-panel .draw-deck>span:last-child>b{font-size:12px}
+  #app .hand-panel .hand-actions{height:34px;gap:8px}
+  #app .hand-panel .action-buttons{gap:6px}
+  #app .hand-panel .action-buttons>.button{height:33px;min-width:63px;padding:5px 9px;font-size:13px;gap:4px}
+  #app .hand-panel .action-buttons kbd{display:none}
+  #app .hand-panel .selection-hint{height:30px;gap:4px;font-size:10px;justify-content:flex-end;text-align:right}
+  #app .hand-panel .selection-hint b{font-size:12px}
+  #app .hand-panel .selection-hint>span{font-size:10px;white-space:normal}
+  #app .hand-panel .clear-selection{width:22px;height:22px;font-size:17px}
+  #app .arena .arena-topline{height:23px;padding:7px 10px;font-size:10px}
+  #app .arena .arena-topline>span:first-child{font-size:8px}
+  #app .arena .arena-topline .boss-hint{font-size:10px}
+  #app .arena>.arena-content,#app .table:has(.round-notice) .arena:has(.table-watermark)>.arena-content,#app .arena.is-scoring>.arena-content{padding:26px 8px 6px}
+  #app .arena-content>.table-watermark h2{font-size:20px;margin:6px 0}
+  #app .arena-content>.table-watermark p{font-size:12px;letter-spacing:0}
+  #app .arena .watermark-suits{font-size:20px}
+  #app .arena .played-label{font-size:12px;margin-bottom:5px}
+  #app .arena .played-cards{gap:6px}
+  #app .arena .played-cards>.playing-card{width:clamp(32px,5.7dvh,48px)}
+  #app .arena .scoring-panel{margin-top:6px}
+  #app .arena .scoring-phases>span{font-size:10px;padding:3px 1px}
+  #app .arena .scoring-event{min-height:27px;padding:4px 6px;font-size:11px;gap:6px}
+  #app .arena .scoring-event>strong{font-size:12px}
+  #app .arena .scoring-formula{font-size:14px;padding:4px 0 1px;gap:8px}
+  #app .arena .scoring-formula>b{font-size:18px}
+  #app .arena .scoring-controls{font-size:10px}
+  #app .arena .scoring-controls button{font-size:11px;padding:3px}
+  #app .result-panel h2{font-size:20px;margin:5px 0}
+  #app .result-panel .result-eyebrow{font-size:9px}
+  #app .result-panel .result-score{font-size:25px;margin:5px 0}
+  #app .result-panel .payout-lines{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;padding:6px 0;margin:5px 0 8px}
+  #app .result-panel .payout-lines>span{flex-wrap:wrap;justify-content:center;gap:3px;font-size:11px;line-height:1.2}
+  #app .result-panel .payout-lines b{width:100%;font-size:15px}
+  #app .result-panel .payout-lines small{display:none}
+  #app .result-panel>.button{height:33px;min-height:33px;font-size:13px}
+  #app .result-panel>p{font-size:12px}
+  #app .arena>.blind-selection,#app .arena>.shop-content,#app .arena>.pack-selection{padding:29px 9px 9px}
+  #app .arena .section-intro h2{font-size:19px}
+  #app .arena .section-intro p{font-size:12px;margin-top:4px}
+  #app .arena .blind-choices{gap:7px;margin-top:12px}
+  #app .arena .blind-choice{padding:8px}
+  #app .arena .blind-choice h3{font-size:16px}
+  #app .arena .blind-choice p{font-size:12px;min-height:0;margin:4px 0}
+  #app .arena .blind-choice .button{font-size:12px;min-height:30px}
+  #app .arena .starter-tip>span{font-size:11px}
+  #app .arena .shop-content{grid-template-rows:34px minmax(0,1fr) 32px;gap:9px}
+  #app .arena .shop-heading h2{font-size:17px}
+  #app .arena .shop-heading .next-round{font-size:12px;min-height:31px;padding:6px 8px}
+  #app .arena .shop-layout{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) 64px;gap:8px}
+  #app .arena .shop-products{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  #app .arena .shop-products .shop-item{display:flex;flex-direction:column;padding:8px 5px;text-align:center}
+  #app .arena .shop-products .shop-art,#app .arena .pack-cards .shop-art{width:52px;height:71px;margin:0 0 6px;flex-shrink:0}
+  #app .arena .shop-products .rarity{font-size:10px;padding:2px 4px;line-height:1.2;white-space:normal;min-height:17px}
+  #app .arena .shop-products h3{font-size:13px;margin:6px 0 0}
+  #app .arena .shop-products p{font-size:12px;line-height:1.35;min-height:0;margin:6px 0;flex:1 0 auto}
+  #app .arena .shop-products .buy-button{min-height:31px;font-size:12px;padding:5px 7px}
+  #app .arena .shop-extras{display:grid;grid-template-columns:minmax(0,1fr) 116px;grid-template-rows:minmax(0,1fr);gap:7px}
+  #app .arena .voucher-offer{display:grid;grid-template-columns:minmax(0,1fr) 58px;grid-template-rows:auto auto;text-align:left;padding:6px 7px;gap:2px 6px}
+  #app .arena .voucher-offer .eyebrow,#app .arena .voucher-offer .voucher-graphic{display:none}
+  #app .arena .voucher-offer h3{grid-column:1;grid-row:1;font-size:12px}
+  #app .arena .voucher-offer p{grid-column:1;grid-row:2;font-size:11px}
+  #app .arena .voucher-offer>.button{grid-column:2;grid-row:1/3;min-height:30px;font-size:11px;padding:5px;margin:0}
+  #app .arena .booster-offer{height:100%;min-height:0;padding:7px;gap:5px}
+  #app .arena .booster-offer .mini-pack{display:none}
+  #app .arena .booster-offer b{font-size:11px}
+  #app .arena .booster-offer small{font-size:10px}
+  #app .arena .shop-footer{gap:6px}
+  #app .arena .shop-footer>.button{min-height:30px;padding:5px 8px;font-size:12px}
+  #app .arena .shop-footer>span{font-size:10px;line-height:1.3;flex:1}
+  #app .arena .pack-cards{gap:7px;margin-top:12px}
+  #app .arena .pack-cards .shop-item{padding:8px 5px}
+  #app .arena .pack-cards .shop-item h3{font-size:13px}
+  #app .arena .pack-cards .shop-item p{font-size:12px;line-height:1.35;min-height:0}
+  #app .arena .pack-cards .button{font-size:12px;padding:6px 3px;min-height:31px}
+}
+
+@media(max-width:680px) and (max-height:740px){
+  #app .app-shell{--rack-h:52px;--hand-card-w:50px;--rule-h:44px;--hand-h:225px;grid-template-rows:43px minmax(0,1fr)}
+  #app .app-shell>.game-grid{grid-template-rows:151px minmax(0,1fr);gap:6px;padding-top:5px}
+  #app .game-grid>.sidebar,#app .app-shell:is([data-phase=blind],[data-phase=shop]) .sidebar{grid-template-rows:22px 54px 32px 27px;padding:6px 8px}
+  #app .sidebar .score-block,#app .sidebar .hand-score-block{height:70px}
+  #app .sidebar .hand-score-block{height:76px}
+  #app .sidebar .round-score{font-size:24px;line-height:1.5}
+  #app .sidebar .hand-type{height:18px;margin-bottom:2px}
+  #app .sidebar .calculation{height:36px}
+  #app .sidebar .calculation b{font-size:18px}
+  #app .sidebar .estimated{height:14px;min-height:14px}
+  #app .sidebar .stat-grid{height:32px}
+  #app .sidebar .stat>strong{font-size:17px}
+  #app .app-shell .inventory .joker-card-name{min-height:20px;font-size:9px;line-height:10px}
+  #app .app-shell .inventory .joker-card .card-art{height:23px}
+  #app .app-shell .inventory .consumable-card .card-art{height:23px}
+  #app .arena .scoring-phases{display:none}
+  #app .arena .section-intro p{display:none}
+  #app .arena .shop-products .shop-art,#app .arena .pack-cards .shop-art{width:41px;height:56px}
+  #app .arena .shop-item p{font-size:11px}
+  #app .arena .shop-products .shop-art,#app .arena .pack-cards .shop-art{display:none}
+  html[lang=en] #app .arena .shop-heading h2{font-size:13px}
+  #app .hand-panel .rule-heading{display:none}
+  #app .hand-panel .round-notice:not(.has-error) .rule-copy p{display:none}
+  #app .hand-panel .round-notice.has-error .rule-copy>strong{display:none}
+  #app .arena-content .result-panel{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:0 2px}
+  #app .result-panel>*{grid-column:1/-1}
+  #app .result-panel .result-eyebrow,#app .result-panel>p:not(.result-score){display:none}
+  #app .result-panel h2{font-size:19px;line-height:1.2;margin:0}
+  #app .result-panel .result-score{font-size:24px;line-height:1.1;margin:0}
+  #app .result-panel .payout-lines{padding:4px 0;margin:0;gap:7px}
+  #app .result-panel .payout-lines>span{font-size:11px;padding:0;gap:2px}
+  #app .result-panel .payout-lines b{font-size:14px}
+  #app .result-panel .run-summary{margin:0;padding:5px 0}
+  #app .result-panel .run-summary>span{font-size:10px}
+  #app .result-panel .run-summary b{font-size:18px;margin-top:3px}
+  #app .result-panel>.button{height:32px;min-height:32px;font-size:12px;padding:5px 8px;margin:0}
+  #app .result-panel>.button:not(:last-child){grid-column:1}
+  #app .result-panel>.text-button{grid-column:2;align-self:center;font-size:11px;padding:4px;margin:0}
+  #app .arena .blind-selection{justify-content:center}
+  #app .arena .section-intro h2{font-size:17px;line-height:1.3}
+  #app .arena .blind-choices{margin-top:8px;gap:5px}
+  #app .arena .blind-choice:not(.current){display:grid;grid-template-columns:65px minmax(0,1fr) 65px;grid-template-rows:1fr;height:37px;padding:5px 7px;align-items:center}
+  #app .arena .blind-choice:not(.current) .blind-choice-top{grid-column:1;grid-row:1;font-size:10px;gap:4px}
+  #app .arena .blind-choice:not(.current) h3{grid-column:2;grid-row:1;font-size:14px;text-align:center}
+  #app .arena .blind-choice:not(.current) .blind-target{grid-column:3;grid-row:1;font-size:21px;margin:0}
+  #app .arena .blind-choice:not(.current) .blind-badge{display:none}
+  #app .arena .blind-choice.current{padding:7px}
+  #app .arena .blind-choice.current p{font-size:11px;margin:3px 0}
+  #app .arena .starter-tip{margin-top:8px}
+}
+
+@media(max-width:680px) and (max-height:620px){
+  #app .app-shell{--rack-h:45px;--hand-card-w:43px;--rule-h:44px;--hand-h:204px;grid-template-rows:40px minmax(0,1fr);padding-bottom:4px}
+  #app .app-shell>.game-grid{grid-template-rows:127px minmax(0,1fr);gap:4px;padding-top:4px}
+  #app .game-grid>.sidebar,#app .app-shell:is([data-phase=blind],[data-phase=shop]) .sidebar{grid-template-rows:19px 39px 30px 25px;padding:5px 7px}
+  #app .sidebar .score-block,#app .sidebar .hand-score-block{height:58px}
+  #app .sidebar .score-block{padding:3px 5px}
+  #app .sidebar .round-score{font-size:21px;line-height:1.35}
+  #app .sidebar .calculation{height:32px}
+  #app .sidebar .estimated{display:none}
+  #app .sidebar .target-block>strong{font-size:23px}
+  #app .sidebar .stat-grid{height:30px}
+  #app .sidebar .sidebar-buttons{margin-top:0;grid-template-rows:24px}
+  #app .sidebar-buttons .subtle-button{height:24px;font-size:10px}
+  #app .app-shell .inventory-heading{font-size:10px}
+  #app .app-shell .inventory .joker-card .card-art{height:17px}
+  #app .app-shell .inventory .consumable-card .card-art{height:17px}
+  #app .hand-panel .hand-toolbar{height:20px}
+  #app .play-area>.hand-panel{grid-template-rows:20px var(--rule-h) minmax(0,1fr) 30px;padding:4px 6px 5px;gap:2px}
+  #app .hand-panel .action-buttons>.button{height:29px}
+  #app .hand-panel .hand-actions{height:30px}
+  #app .hand-panel .rule-heading{display:none}
+  #app .arena .scoring-event{min-height:24px;padding:3px 5px}
+  #app .arena .scoring-formula{padding:3px 0 0}
+  #app .arena .shop-content{grid-template-rows:28px minmax(0,1fr) 28px;gap:5px;padding-top:27px;padding-bottom:7px}
+  #app .arena .shop-layout{grid-template-rows:minmax(0,1fr) 50px;gap:5px}
+  #app .arena .shop-heading h2{font-size:15px}
+  html[lang=en] #app .arena .shop-heading h2{font-size:12px;line-height:1.15}
+  #app .arena .shop-products .shop-item{padding:5px}
+  #app .arena .shop-products .rarity{font-size:9px;padding:2px 3px;min-height:0;line-height:1.15}
+  #app .arena .shop-products h3{font-size:12px;line-height:1.2;margin-top:4px}
+  #app .arena .shop-products p{font-size:11px;line-height:1.2;margin:4px 0}
+  #app .arena .shop-products .buy-button{height:27px;min-height:27px;padding:4px 6px}
+  #app .arena .shop-heading .next-round,#app .arena .shop-footer>.button{height:27px;min-height:27px;padding:4px 7px}
+  #app .arena .shop-footer>span{display:none}
+  #app .arena .starter-tip{display:none}
+  #app .arena-content .result-panel{gap:2px}
+  #app .result-panel h2{font-size:16px}
+  #app .result-panel h2>span{font-size:15px}
+  #app .result-panel .result-score{font-size:20px}
+  #app .result-panel .payout-lines{padding:2px 0}
+  #app .result-panel .payout-lines>span{font-size:10px;line-height:1.1;gap:0}
+  #app .result-panel .payout-lines b{font-size:12px}
+  #app .result-panel .run-summary{padding:3px 0}
+  #app .result-panel .run-summary b{font-size:16px;margin-top:2px}
+  #app .result-panel>.button{height:27px;min-height:27px;font-size:11px;padding:4px 6px}
+}
+
+@media(min-width:681px) and (max-height:700px){
+  #app .arena-content .result-panel{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:0 2px}
+  #app .result-panel>*{grid-column:1/-1}
+  #app .result-panel .result-eyebrow,#app .result-panel>p:not(.result-score){display:none}
+  #app .result-panel h2{font-size:20px;line-height:1.2;margin:0}
+  #app .result-panel .result-score{font-size:25px;line-height:1.1;margin:0}
+  #app .result-panel .payout-lines{padding:4px 0;margin:0;gap:7px}
+  #app .result-panel .payout-lines>span{font-size:12px;padding:0;gap:2px}
+  #app .result-panel .run-summary{margin:0;padding:5px 0}
+  #app .result-panel .run-summary>span{font-size:11px}
+  #app .result-panel .run-summary b{font-size:18px;margin-top:3px}
+  #app .result-panel>.button{height:33px;min-height:33px;font-size:13px;padding:5px 8px;margin:0}
+  #app .result-panel>.button:not(:last-child){grid-column:1}
+  #app .result-panel>.text-button{grid-column:2;align-self:center;font-size:12px;padding:4px;margin:0}
+}
+
+/* Short viewports keep the animated cards, calculation and skip control visible. */
+@media(min-width:681px) and (max-height:700px),(max-width:680px) and (max-height:740px){
+  #app .arena.is-scoring .played-hand{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto auto;gap:5px 8px;width:min(520px,100%);align-items:center}
+  #app .arena.is-scoring .played-label{grid-column:1;grid-row:1;text-align:left;margin:0;font-size:13px}
+  #app .arena.is-scoring .played-cards{grid-column:2;grid-row:1;gap:5px;justify-content:flex-end}
+  #app .arena.is-scoring .played-cards>.playing-card{width:32px}
+  #app .arena.is-scoring .scoring-panel{display:contents}
+  #app .arena.is-scoring .scoring-phases{display:none}
+  #app .arena.is-scoring .scoring-event{grid-column:1/-1;grid-row:2;margin:0;min-height:25px;padding:4px 6px;line-height:1.25}
+  #app .arena.is-scoring .scoring-formula{grid-column:1;grid-row:3;justify-content:flex-start;padding:0;gap:7px;font-size:13px}
+  #app .arena.is-scoring .scoring-formula>b{font-size:18px}
+  #app .arena.is-scoring .scoring-controls{grid-column:2;grid-row:3;gap:6px;padding:0;font-size:10px}
+  #app .arena.is-scoring .scoring-controls button{font-size:11px;padding:3px 0}
+}
+@media(max-width:680px) and (max-height:620px){
+  #app .arena.is-scoring .played-hand{gap:3px 6px}
+  #app .arena.is-scoring .played-label{font-size:11px}
+  #app .arena.is-scoring .played-cards{gap:4px}
+  #app .arena.is-scoring .played-cards>.playing-card{width:26px}
+  #app .arena.is-scoring .scoring-event{min-height:24px;padding:3px 5px}
+  #app .arena.is-scoring .scoring-formula{font-size:12px;gap:5px}
+  #app .arena.is-scoring .scoring-formula>b{font-size:15px}
+  #app .arena.is-scoring .scoring-controls{font-size:9px;gap:4px}
+  #app .arena.is-scoring .scoring-controls button{font-size:10px}
+  #app .arena.is-scoring .playing-card.is-triggering{animation:none;translate:none;outline-width:2px;outline-offset:1px}
+}
+
+/* Selection gestures preserve the same fan and stacking order throughout a stroke. */
+#app .hand-cards>.playing-card{touch-action:none;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
+.is-selecting-cards,.is-selecting-cards *{cursor:grabbing!important;user-select:none!important;-webkit-user-select:none!important}
+.difficulty-easy{--difficulty-color:#a9d8b0}
+.difficulty-medium{--difficulty-color:#a4c9ee}
+.difficulty-hard{--difficulty-color:#f1ca76}
+.difficulty-nightmare{--difficulty-color:#ffa99a}
+#app .difficulty-badge{display:inline-block;font:600 10px/1.35 var(--sans);letter-spacing:0;border:1px solid color-mix(in srgb,var(--difficulty-color),transparent 60%);border-radius:4px;padding:1px 4px;color:var(--difficulty-color);vertical-align:middle;white-space:nowrap}
+#modal-root .difficulty-picker{padding:0;border:0;min-width:0;margin:16px 0 20px}
+#modal-root .difficulty-picker legend{font-size:14px;color:#e6e5c9;font-weight:650;margin:0 0 9px}
+#modal-root .difficulty-options{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+#modal-root .difficulty-option{font-size:14px;padding:9px 2px;border:1px solid #92ac8d50;border-radius:6px;color:#bacab2;background:#143f32;min-height:39px}
+#modal-root .difficulty-option[aria-pressed=true]{border-color:var(--difficulty-color);color:var(--difficulty-color);background:color-mix(in srgb,var(--difficulty-color) 13%,#143f32);box-shadow:inset 0 -2px var(--difficulty-color)}
+#modal-root .difficulty-option:focus-visible{outline:2px solid #fff2cc;outline-offset:2px}
+#modal-root #difficulty-preview{padding:10px 12px;margin-top:10px;border:1px solid #9bb58b30;border-radius:7px;background:#0b302951}
+#modal-root .difficulty-description{font-size:13px;line-height:1.6;color:#d0d9bc;min-height:21px;margin:0 0 9px}
+#modal-root .difficulty-resources,#modal-root .difficulty-targets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:8px 0}
+#modal-root .difficulty-resources>span{display:flex;flex-direction:column;font-size:11px;color:#a6bb9f;gap:3px}
+#modal-root .difficulty-resources b{font:600 17px var(--mono);color:#f2d58e}
+#modal-root .difficulty-targets>span{display:flex;flex-direction:column;align-items:center;gap:4px;background:#91b1880c;border:1px solid #9bb58b25;border-radius:5px;padding:6px;font-size:11px;color:#adc1a5}
+#modal-root .difficulty-targets b{font:600 17px var(--mono);color:#eee7c6}
+#modal-root .difficulty-jokers{display:flex;align-items:center;flex-wrap:wrap;gap:4px 6px;font-size:11px;margin:10px 0 7px}
+#modal-root .difficulty-jokers>span:first-child{width:100%;color:#a6bb9f;margin-bottom:3px}
+#modal-root .difficulty-jokers .rarity{font-size:11px;padding:2px 5px;align-self:auto;margin:0}
+#modal-root .difficulty-jokers b{font:500 11px var(--mono);margin-right:3px}
+#modal-root .difficulty-footnote{font-size:11px;line-height:1.5;color:#abc1a2;margin:6px 0 0}
+#modal-root .difficulty-curve{font-size:12px;color:#d2c798;margin-top:9px}
+#modal-root .difficulty-curve summary{cursor:pointer;padding:3px 0}
+#modal-root .difficulty-curve table{border-collapse:collapse;width:100%;margin-top:7px;font:11px/1.8 var(--mono);text-align:right;color:#ced9b9}
+#modal-root .difficulty-curve td,#modal-root .difficulty-curve th{border-bottom:1px solid #9bb58b25;padding:3px;font-weight:400}
+#modal-root .board-controls{flex-wrap:wrap}
+#modal-root .board-controls label{margin-left:0;min-width:0;flex:1 1 150px;display:flex;align-items:center;gap:8px;white-space:nowrap}
+#modal-root .board-controls select{min-width:0;max-width:100%;flex:1}
+@media(max-width:680px){
+  #app .target-block>span:first-child{font-size:10px;letter-spacing:0;white-space:nowrap}
+  #app .difficulty-badge{font-size:9px;padding:0 3px}
+  #modal-root .difficulty-jokers{gap:3px 4px}
+  #modal-root .difficulty-jokers b{font-size:10px}
+  #modal-root .difficulty-jokers .rarity{font-size:10px;padding:1px 4px}
+  #modal-root .board-controls label{width:auto;margin:4px 0;flex-basis:100%}
+}
+#modal-root .run-setup-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#modal-root .run-setup-fields>div{min-width:0}
+#modal-root .run-setup-fields .seed-label{margin:0 0 6px;display:flex;gap:5px;align-items:baseline;font-size:13px}
+#modal-root .run-setup-fields .seed-input{margin:0;width:100%;font-size:14px;padding:10px;min-height:42px}
+#modal-root .run-setup-fields .seed-label small{font-size:10px;margin:0}
+#modal-root .run-mode-note{font-size:11px;line-height:1.5;color:#a6bb9f;margin:8px 0 0}
+#modal-root .restart-modal .difficulty-picker{margin:12px 0 14px}
+#modal-root .restart-modal .modal-subtitle{margin-bottom:14px}
+#modal-root .restart-modal{width:min(560px,100%)}
+#modal-root .restart-modal>h2{margin-bottom:14px}
+#modal-root .run-setup-fields .seed-label{flex-direction:row}
+#modal-root .restart-modal .difficulty-picker{margin-bottom:10px}
+
+#modal-root .tutorial-progress{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-bottom:20px}
+#modal-root .tutorial-progress>span{font-size:11px;line-height:1.4;color:#8ea98b;padding:7px 4px;border-bottom:2px solid #789a7550;text-align:center}
+#modal-root .tutorial-progress>.current{color:#f5d78b;border-color:#f5d78b}
+#modal-root .tutorial-progress>.complete{color:#b3d9ae;border-color:#b3d9ae}
+#modal-root .tutorial-title{font-size:19px;line-height:1.6;margin:8px 0 10px;color:#f4e9ca}
+#modal-root .tutorial-copy{font-size:14px;line-height:1.75;color:#bdceb1;margin:0 0 18px}
+#modal-root .tutorial-hand{display:flex;gap:5px;justify-content:center;padding:15px 3px 9px}
+#modal-root .tutorial-hand>.playing-card{flex:0 1 60px;width:calc((100% - 20px)/5);min-width:0;max-width:60px;aspect-ratio:2/3;height:auto;padding:0;transform:none}
+#modal-root .tutorial-hand>.tutorial-selected{transform:translateY(-9px);outline:2px solid #f0cb72;outline-offset:2px}
+#modal-root .tutorial-hand>button:disabled{opacity:1;cursor:default}
+#modal-root .tutorial-hand>button:disabled:not(.tutorial-selected){opacity:.4}
+#modal-root .tutorial-calculation{display:flex;justify-content:center;align-items:center;gap:12px;padding:17px 8px;margin-top:16px;border:1px solid #93b68140;border-radius:7px;background:#103329}
+#modal-root .tutorial-calculation>span,#modal-root .tutorial-calculation>strong{font:700 28px var(--mono)}
+#modal-root .tutorial-calculation>strong{color:#f3d288}
+#modal-root .tutorial-calculation>i{font-size:19px;font-style:normal;color:#91ad87}
+#modal-root .tutorial-jokers{display:flex;justify-content:center;gap:22px;margin-bottom:15px}
+#modal-root .tutorial-jokers>div{display:flex;flex-direction:column;align-items:center;gap:7px;font-size:13px}
+#modal-root .tutorial-jokers svg{width:75px;height:94px}
+#modal-root .tutorial-jokers>div>span{font-size:14px;color:#e9cf8a}
+#modal-root .tutorial-shop{display:flex;gap:25px;align-items:center;justify-content:center;padding:14px}
+#modal-root .tutorial-shop>div{width:86px;flex-shrink:0}
+#modal-root .tutorial-shop section p{font-size:14px;margin:7px 0}
+#modal-root .tutorial-shop h3{font-size:21px}
+#modal-root .tutorial-shop .button{margin-top:7px}
+#modal-root .tutorial-safe{font-size:11px;line-height:1.7;color:#9eb597;text-align:center;margin:11px 0}
+#modal-root .tutorial-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:17px}
+#modal-root .tutorial-actions .button{font-size:14px;padding:10px 15px}
+@media(max-width:680px){#modal-root .tutorial-title{font-size:17px}#modal-root .tutorial-progress{margin-bottom:14px}#modal-root .tutorial-progress>span{font-size:10px}#modal-root .tutorial-copy{font-size:13px}#modal-root .tutorial-calculation>span,#modal-root .tutorial-calculation>strong{font-size:24px}#modal-root .tutorial-actions .button{font-size:12px;padding:9px 12px}}
+
+/* Mode setup and network summaries stay inside the existing panels. */
+#modal-root .game-mode-picker{border:0;padding:0;margin:12px 0;min-width:0}
+#modal-root .game-mode-picker legend{font-size:14px;font-weight:650;margin-bottom:8px}
+#modal-root .game-mode-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+#modal-root .game-mode-options button{border:1px solid #87a68d66;border-radius:6px;background:#234d40;padding:10px 6px;color:#dce2c5;font:inherit;font-size:13px;min-height:44px;line-height:1.35}
+#modal-root .game-mode-options button[aria-pressed="true"]{border-color:#e3bd6e;background:#55684b;color:#fff1bf;box-shadow:inset 0 0 0 1px #e3bd6e}
+#modal-root .game-mode-options button:focus-visible{outline:2px solid #e3bd6e;outline-offset:3px}
+#game-mode-description{font-size:13px;line-height:1.6;color:#b7c9ac;min-height:42px;margin:8px 0 0}
+#modal-root .board-player-info{display:flex;flex-direction:column;min-width:0;white-space:normal;gap:4px}
+#modal-root .board-player-info>span{overflow-wrap:anywhere}
+#modal-root .board-network{font:11px/1.5 var(--sans);color:#aac4b1;white-space:normal;overflow-wrap:anywhere}
+#modal-root .leaderboard-row{grid-template-columns:24px minmax(0,1.8fr) minmax(0,.85fr) 36px 66px minmax(0,1fr)}
+.money-stat strong{white-space:nowrap;letter-spacing:-1px}
+@media(max-width:600px){
+  #modal-root .leaderboard-row{grid-template-columns:18px minmax(0,1.5fr) minmax(0,.8fr) 25px 48px;gap:6px}
+  #modal-root .board-network{font-size:10px}
+  #modal-root .game-mode-options button{font-size:12px}
+}
+
+.coin-symbol{display:inline-block;position:relative;flex:none;width:.78em;height:.78em;margin-inline:1px 3px;vertical-align:-.04em;border:1px solid #b78b35;border-radius:50%;background:#efc65f;box-shadow:inset 0 0 0 2px #f9db8d,0 1px 0 #785e2e}
+.coin-symbol::after{content:"";position:absolute;inset:24% 38%;border-radius:1px;background:#9c762b}
+
+#app .blind-heading h1{display:flex;align-items:center;gap:6px}
+#app .game-mode-badge{font:500 10px/1.35 var(--sans);color:#e5cd8e;border:1px solid #c9b46766;border-radius:4px;padding:1px 4px;letter-spacing:0;white-space:nowrap}
+@media(max-width:680px){#app .blind-heading h1{gap:4px}#app .game-mode-badge{font-size:9px;padding:0 3px}}
+
+#modal-root .board-head{font-size:11px;line-height:1.4}
+
+#app .app-shell .inventory .joker-rack{grid-template-columns:repeat(var(--joker-slots,5),minmax(0,1fr));max-width:calc(var(--rack-h)*.8*var(--joker-slots,5) + 8px*(var(--joker-slots,5) - 1))}
+#modal-root .joker-catalog{font-size:12px;line-height:1.6;margin:10px 0;color:#b8c8ac}
+#modal-root .joker-catalog summary{cursor:pointer;color:#ead196;padding:5px 0}
+#modal-root .joker-catalog>div{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
+#modal-root .joker-catalog article{display:grid;grid-template-columns:1fr auto;align-items:start;gap:5px;padding:9px;border:1px solid #99b38d33;border-radius:5px;background:#133a3066}
+#modal-root .joker-catalog article .rarity{grid-column:1/-1;justify-self:start;font-size:10px;margin:0}
+#modal-root .joker-catalog article>strong{color:#e9e9cb;font-size:12px}
+#modal-root .joker-catalog article>b{color:#e6c579;white-space:nowrap}
+#modal-root .joker-catalog article>p{grid-column:1/-1;font-size:11px;line-height:1.6;margin:0}
+@media(max-width:680px){#app .app-shell .inventory .joker-rack{gap:3px}#modal-root .joker-catalog>div{grid-template-columns:1fr}}
+
+/* Six-seat gives its six jokers the whole rack; the shop keeps its booster beside three jokers. */
+#app .app-shell .inventory.jokers-only{grid-template-columns:minmax(0,1fr)}
+#app .arena .jokers-only-shop .shop-extras{display:flex;align-items:stretch;justify-content:center}
+@media(max-width:680px){
+  #app .arena .jokers-only-shop .shop-extras{display:grid;grid-template-columns:minmax(0,1fr)}
+  #app .arena .jokers-only-shop .shop-products .shop-item p{flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin}
+  #app .arena .jokers-only-shop .booster-offer{justify-content:center;gap:12px}
+  #app .arena .jokers-only-shop .booster-offer b{font-size:13px}
+  #app .arena .jokers-only-shop .booster-offer small{font-size:11px}
+}
