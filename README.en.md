@@ -49,7 +49,7 @@ npm run dev
 
 Open **http://127.0.0.1:5173**. Administration is at **/admin**; it is absent from game navigation, but its protection comes from server-side authentication.
 
-`admin:init` prints a random administrator key only on first installation. Save it securely. Running the command again cannot display the old key. The game also runs without initializing administration.
+`admin:init` initializes the administrator and prints a random key once in the terminal. Save it securely. Administrator initialization is optional for playing the game.
 
 To serve a production build:
 
@@ -68,7 +68,7 @@ Keys: `E` play, `D` discard, `R` sort, `Esc` clear / close / skip scoring animat
 | Quick Run | 3 | 5 | 4 extra coins, a starting Joker and 20% off regular items |
 | Six-seat | 5 | 6 | An independent pool of 33 jokers; builds use only playing cards and jokers |
 
-Six-seat has no planets, tarots, enhancement cards or vouchers. Shops offer 3 random jokers, paid rerolls and choose-one-of-three joker packs. The pool includes Pareidolia, Smiley Face, Scary Face, face-card retriggers and Four Fingers. A separate seven-Boss pool prevents The Plant from debuffing every card with Pareidolia.
+Six-seat builds use playing cards and jokers, with a separate seven-Boss pool. Shops offer 3 random jokers, paid rerolls and choose-one-of-three joker packs. The joker pool includes Pareidolia, Smiley Face, Scary Face, face-card retriggers and Four Fingers.
 
 Difficulty adjusts targets, starting resources, rarity odds and target growth. The new-run dialog previews actual resources and blind targets. Mode, difficulty and rules are fixed at creation; administrator changes apply only to new runs.
 
@@ -86,12 +86,11 @@ Music and effects default to on. Browsers require an initial click or touch befo
 - Disabling rankings hides profile, leaderboard and submission controls. Existing boards remain; active server runs can continue but permanently lose ranking eligibility, including after rankings are re-enabled.
 - Archive & clear starts a new season for selected modes / difficulties across all three metrics. Older scores remain archived within retention limits. Runs started before the reset cannot enter the new season.
 
-Nicknames may repeat. An HTTP-only cookie identifies each guest. Clearing cookies or changing browsers/devices creates a new identity; nickname ownership and cross-device synchronization are not guaranteed.
+The server generates a default player name, such as `牌友-A1B2C3D4`. Players can edit their nickname, and names may repeat. An HTTP-only cookie identifies each guest. Clearing cookies or changing browsers/devices creates a new identity; nickname ownership and cross-device synchronization are not guaranteed.
 
+Public entries show masked IPs, browser summaries and approximate regions. Full IPs and user agents are admin-only. Cloudflare supplies coarse geolocation; no cities, coordinates or third-party GeoIP requests are stored. Region availability depends on the deployment environment and request metadata. Cleanup redacts network metadata older than 30 days; submitting an old run does not renew its retention.
 
-Public entries show masked IPs, browser summaries and approximate regions. Full IPs and user agents are admin-only. Cloudflare supplies coarse geolocation; no cities, coordinates or third-party GeoIP requests are stored. Local and historical records may have no region. Cleanup redacts network metadata older than 30 days; submitting an old run does not renew its retention.
-
-Raw runs become eligible for cleanup after **7 days without updates**, in batches of up to 100 per cleanup. Node runs cleanup hourly and Cloudflare runs it daily, so scheduling and backlog may delay deletion. Historical round counts are recovered only from surviving real saves; unknown counts display `—` and do not enter the rounds board.
+Raw runs become eligible for cleanup after **7 days without updates**, in batches of up to 100 per cleanup. Node runs cleanup hourly and Cloudflare runs it daily, so scheduling and backlog may delay deletion. Results with unknown round counts display `—` and do not enter the rounds board.
 
 ## Docker
 
@@ -178,7 +177,7 @@ Click the button below to deploy this project to your own Cloudflare account:
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https%3A%2F%2Fgithub.com%2Fjiangbo202%2Fpaixu)
 
-No manual Fork is required: the flow guides you through sign-in, repository creation and deployment. Cloudflare can provision and bind resources; `npm run deploy` applies D1 migrations using the `DB` binding, including when the database is renamed. If prompted for `ADMIN_SETUP_KEY`, supply a key as described below, or add it in the dashboard after deployment. R2 is no longer needed. Free allowances depend on the plan, and overages may be billed: see official [Workers limits](https://developers.cloudflare.com/workers/platform/limits/) and [D1 pricing](https://developers.cloudflare.com/d1/platform/pricing/).
+No manual Fork is required: the flow guides you through sign-in, repository creation and deployment. Cloudflare can provision and bind resources; `npm run deploy` applies D1 migrations using the `DB` binding, including when the database is renamed. If prompted for `ADMIN_SETUP_KEY`, supply a key as described below, or add it in the dashboard after deployment. Free allowances depend on the plan, and overages may be billed: see official [Workers limits](https://developers.cloudflare.com/workers/platform/limits/) and [D1 pricing](https://developers.cloudflare.com/d1/platform/pricing/).
 
 ### Browser-only administrator setup (recommended)
 
@@ -190,7 +189,7 @@ No manual Fork is required: the flow guides you through sign-in, repository crea
 
 This requires only a browser, with no local clone or commands. Use HTTPS. Cloudflare hides Secret values after saving; replace a lost installation key in the dashboard before initialization. Web initialization is disabled unless a valid Secret is configured.
 
-**Existing administrators keep their current password or generated administrator key.** Web setup runs once: retaining, replacing or adding `ADMIN_SETUP_KEY` cannot overwrite an existing administrator or reset their password. Only a salted password verifier is stored. The installation key is never stored in the database, frontend files or logs. CLI initialization remains available.
+Web setup is available only when no administrator is configured; the setup entry closes after initialization. `ADMIN_SETUP_KEY` verifies first-time installation access and cannot overwrite an administrator or reset their password. Sign-in accepts an administrator password or a key generated by the CLI. Only a salted password verifier is stored. The installation key is never stored in the database, frontend files or logs. The project also supports CLI initialization.
 
 ## Administration and analytics
 
