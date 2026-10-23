@@ -350,12 +350,36 @@ Object.assign(entries, {
   '幻视生效时，植物会使所有扑克牌失效；出售幻视可恢复非人头牌计分。': 'With Pareidolia, The Plant debuffs every card. Sell Pareidolia to restore scoring for numbered cards and Aces.',
   '全部玩法': 'All modes', '地区': 'Region', '重复触发': 'Retrigger',
 });
+Object.assign(entries, {
+  "正在检查管理员状态…": "Checking administrator status…",
+  "重新检查": "Check again",
+  "使用管理员密码或终端生成的管理员密钥登录。": "Sign in with your administrator password or a key generated in the terminal.",
+  "输入管理员密码": "Enter administrator password",
+  "如何配置安装密钥": "Configure the installation key",
+  "在 Cloudflare 控制台打开当前 Worker 的 Settings → Variables and Secrets。": "In the Cloudflare dashboard, open this Worker’s Settings → Variables and Secrets.",
+  "新增 Secret，名称为": "Add a Secret named",
+  "，值为密码管理器生成的 32–256 位随机字符串，不含空白字符。": ", using a random 32–256-character value from a password manager, without whitespace.",
+  "点击 Deploy 保存部署，然后返回此页重新检查。": "Select Deploy to save and deploy, then return here and check again.",
+  "Secret 保存后无法查看原文，请自行保存。也可由部署者运行 npm run admin:init 初始化。": "Save your Secret securely: its value cannot be viewed after saving. Alternatively, the owner can initialize using npm run admin:init.",
+  "安装密钥": "Installation key",
+  "再次输入管理员密码": "Confirm administrator password",
+  "密码需 12–128 个字符。初始化仅限一次；完成后使用管理员密码登录。": "Use a password of 12–128 characters. Setup runs only once; afterward sign in with your administrator password.",
+  "创建管理员": "Create administrator",
+  "尚未配置有效的安装密钥，请由部署者在控制台设置。": "No valid installation key is configured. Ask the owner to set it in the dashboard.",
+  "初始化管理员": "Set up administrator",
+  "使用部署者设置的安装密钥，创建管理员密码。": "Use the installation key configured by the owner to create an administrator password.",
+  "管理员已创建，请使用新密码登录。安装密钥现已失效，可在 Cloudflare 控制台删除。": "Administrator created. Sign in with your new password. The installation key can no longer be used and may be deleted in the Cloudflare dashboard."
+});
 let language = typeof navigator !== 'undefined' && navigator.language.toLowerCase().startsWith('zh') ? 'zh' : 'en';
 try { const saved = localStorage.getItem('paixu-web.language'); if (['zh', 'en'].includes(saved)) language = saved; } catch { /* no storage */ }
 export const getLanguage = () => language;
 export function setLanguage(value) { language = value === 'zh' ? 'zh' : 'en'; try { localStorage.setItem('paixu-web.language', language); } catch { /* no storage */ } }
 const replacements = Object.entries(entries).sort((a, b) => b[0].length - a[0].length);
 const errorsZh = {
+  'Administrator is already initialized. Sign in instead.': '管理员已初始化，请直接登录。',
+  'Configure ADMIN_SETUP_KEY as a Secret of 32–256 non-whitespace characters, then deploy.': '请在控制台配置 ADMIN_SETUP_KEY Secret（32–256 位，不含空白字符）并部署。',
+  'Invalid installation key': '安装密钥错误。',
+  'Administrator is not initialized. Open /admin to set up.': '管理员尚未初始化，请打开 /admin 完成安装。',
   'Invalid ranking metric': '排名类型无效。',
   'Invalid leaderboard limit': '每榜保留名额须为 1–1000 的整数。',
   'Use a password of 12–128 characters': '新密码须为 12–128 个字符，且不能包含控制字符。',

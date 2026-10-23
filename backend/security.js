@@ -7,6 +7,13 @@ function equalHashes(a,b) {
   let difference=0;for(let i=0;i<a.length;i++)difference|=a.charCodeAt(i)^b.charCodeAt(i);
   return difference===0;
 }
+export function validSetupKey(value) {
+  return typeof value === 'string' && value.length >= 32 && value.length <= 256 && !/[\s\p{Cc}]/u.test(value);
+}
+export async function verifySetupKey(value, expected) {
+  if (!validSetupKey(expected) || !validSetupKey(value)) return false;
+  return equalHashes(await digest(value), await digest(expected));
+}
 export function validNewPassword(value) {
   return typeof value==='string' && [...value].length>=12 && [...value].length<=128 && value.trim().length>0 && !/[\p{Cc}]/u.test(value);
 }

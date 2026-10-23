@@ -9,6 +9,7 @@
 ## 凭据与部署
 
 - 安装命令生成 256 位随机密钥，只在操作者终端显示一次，数据库保存 SHA-256 摘要。网页修改后的密码使用随机盐及 PBKDF2-SHA256（100,000 轮，适配 Workers Web Crypto 限制）；请使用密码管理器生成强密码。
+- 网页首次安装需部署者通过 Worker Secret（或 Node 环境变量）设置 `ADMIN_SETUP_KEY`：32–256 位无空白随机字符串。接口验证密钥后以原子插入创建管理员，采用带随机盐的密码验证值；已有管理员无法被安装密钥覆盖或重置。未配置有效密钥时关闭网页安装，完成后可删除 Secret。安装状态接口只返回布尔值，不返回密钥。安装尝试按 IP 限流并校验同源写入，不能代替边缘防护。
 - 管理员会话为 24 小时，Cookie 使用 `HttpOnly`、`SameSite=Strict`，HTTPS 下使用 `Secure`。密码修改或部署者重置会注销所有管理员会话。
 - API 不提供找回或显示管理员密码的接口。丢失时使用本机 / Cloudflare 的 `admin:reset` 命令；不要在网页、Issue、截图或日志中公开密钥。
 - Node 默认监听回环地址，Compose 仅向本机发布端口。公开部署应使用 HTTPS，并正确配置 `PUBLIC_ORIGIN`。`TRUST_PROXY_IPS` 只能列出你控制的真实代理 IP，默认不信任转发头。
@@ -33,6 +34,8 @@
 ## English overview
 
 Server validation protects ranked actions, ownership, revisions and scoring. Practice saves are editable locally and cannot be uploaded as trusted scores. Guest identities, rate limits and hidden admin navigation do not provide account authentication, bot detection or complete denial-of-service protection.
+
+First-time web setup requires an owner-configured `ADMIN_SETUP_KEY` Secret (32–256 random characters, no whitespace). Setup is rate-limited and inserts the administrator atomically; it cannot overwrite or reset an existing administrator. Remove the Secret after setup. No valid Secret means no public web initialization.
 
 Use HTTPS with the correct `PUBLIC_ORIGIN`, trust only explicitly configured proxy addresses, keep API tokens in server-side secrets, and protect databases and backups. New passwords use salted PBKDF2-SHA256 with 100,000 iterations for Workers compatibility; use a strong generated password. Admin sessions expire after 24 hours and are revoked by password changes or resets. Cookies are HTTP-only, SameSite=Strict and Secure under HTTPS.
 

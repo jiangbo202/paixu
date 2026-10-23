@@ -1,0 +1,4 @@
+# First-time web administration setup only. Generate your own random 32–256-character
+# key (no whitespace). Never commit a real key. Leave this blank to disable web setup.
+# Cloudflare: add ADMIN_SETUP_KEY as a Worker Secret in Settings > Variables and Secrets.
+ADMIN_SETUP_KEY=

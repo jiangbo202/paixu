@@ -3,7 +3,7 @@ import { publicNetwork } from './network.js';
 import { DEFAULT_RULES, validateRules, validateDifficulty, difficultyFor } from '../rules.js';
 import { newRun } from '../engine.js';
 import { applyAction, clientState } from './game.js';
-import { token, digest, cookie, sessionCookie, HttpError, jsonBody, validNewPassword, hashPassword, verifyPassword } from './security.js';
+import { token, digest, cookie, sessionCookie, HttpError, jsonBody, validNewPassword, hashPassword, verifyPassword, validSetupKey, verifySetupKey } from './security.js';
 import { rankingFor } from '../rankings.js';
 import { pruneScoresStatement } from './leaderboard.js';
 import { siteSettings, rankingEpochs, updateSiteSettings, resetLeaderboard, requireRanking } from './settings.js';
@@ -151,10 +151,29 @@ export async function handleApi(request, env) {
       const visibleRun=await publicRun(db,latest,state);
       return json({ run: visibleRun, rankingEnabled: (await siteSettings(db)).rankingEnabled, submitted: results[1]?.meta.changes === 1 && visibleRun.scoreRecorded });
     }
+    if (path === '/api/admin/setup' && request.method === 'GET') {
+      await limit(db, 'adminstatus:' + ip, 60, 60000);
+      const initialized = !!await one(db, "SELECT value FROM paixu_meta WHERE key='admin_key_hash'");
+      return json({ initialized, setupAvailable: !initialized && validSetupKey(env.ADMIN_SETUP_KEY) });
+    }
+    if (path === '/api/admin/setup' && request.method === 'POST') {
+      await limit(db, 'adminsetup:' + ip, 5, 900000);
+      if (await one(db, "SELECT value FROM paixu_meta WHERE key='admin_key_hash'")) throw new HttpError(409, 'Administrator is already initialized. Sign in instead.', 'admin_already_initialized');
+      if (!validSetupKey(env.ADMIN_SETUP_KEY)) throw new HttpError(503, 'Configure ADMIN_SETUP_KEY as a Secret of 32–256 non-whitespace characters, then deploy.', 'admin_setup_unavailable');
+      const body = await jsonBody(request);
+      if (!await verifySetupKey(body.setupKey, env.ADMIN_SETUP_KEY)) throw new HttpError(403, 'Invalid installation key', 'invalid_setup_key');
+      if (!validNewPassword(body.newPassword)) throw new HttpError(400, 'Use a password of 12–128 characters', 'invalid_password');
+      if (body.newPassword !== body.confirmPassword) throw new HttpError(400, 'New passwords do not match', 'password_mismatch');
+      const hash = await hashPassword(body.newPassword);
+      // The primary key makes initialization atomic, including against CLI initialization.
+      const inserted = await run(db, "INSERT OR IGNORE INTO paixu_meta(key,value) VALUES('admin_key_hash',?)", hash);
+      if (inserted.meta.changes !== 1) throw new HttpError(409, 'Administrator is already initialized. Sign in instead.', 'admin_already_initialized');
+      return json({ ok: true }, 201);
+    }
     if (path === '/api/admin/login' && request.method === 'POST') {
       await limit(db, 'adminlogin:' + ip, 5, 900000); const body = await jsonBody(request);
       const stored = await one(db, "SELECT value FROM paixu_meta WHERE key='admin_key_hash'");
-      if (!stored) throw new HttpError(503, 'Run the owner-only admin initialization command first', 'admin_not_initialized');
+      if (!stored) throw new HttpError(503, 'Administrator is not initialized. Open /admin to set up.', 'admin_not_initialized');
       if (!await verifyPassword(body.key,stored.value)) throw new HttpError(401, 'Invalid administrator key', 'invalid_key');
       const key = token();
       const inserted=await run(db, "INSERT INTO paixu_admin_sessions(token_hash,expires_at) SELECT ?,? WHERE EXISTS(SELECT 1 FROM paixu_meta WHERE key='admin_key_hash' AND value=?)", await digest(key), now() + 86400000,stored.value);

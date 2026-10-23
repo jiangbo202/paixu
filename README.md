@@ -172,10 +172,9 @@ npx wrangler d1 create paixu-db --config wrangler.production.local.jsonc
 npm run build
 npx wrangler d1 migrations apply paixu-db --remote --config wrangler.production.local.jsonc
 npx wrangler deploy --config wrangler.production.local.jsonc --keep-vars --strict
-WRANGLER_CONFIG=wrangler.production.local.jsonc npm run admin:init:cloudflare
 ```
 
-密钥只在部署者终端显示，不在网页或构建日志中生成。访问部署地址的 **/admin** 登录。`npm run deploy` 使用默认 `wrangler.jsonc`，只适用于已经正确配置该文件的环境；自定义配置请使用上面成对指定 `--config` 的命令。
+部署后按下方步骤在控制台配置安装密钥，再访问 **/admin** 创建管理员密码，无需本地初始化。也可选择运行 `WRANGLER_CONFIG=wrangler.production.local.jsonc npm run admin:init:cloudflare`，随机管理员密钥只在部署者终端显示一次。`npm run deploy` 使用默认 `wrangler.jsonc`，只适用于已经正确配置该文件的环境；自定义配置请使用上面成对指定 `--config` 的命令。
 
 如果在控制台添加了自定义域名，务必把相应 `routes` 写入部署所用的同一份配置。`--keep-vars` 保留控制台变量，**不会代替域名绑定配置**。管理员脚本默认使用 `paixu-db`，可通过 `CF_D1_DATABASE_NAME` 指定已存在的数据库。
 
@@ -185,7 +184,19 @@ WRANGLER_CONFIG=wrangler.production.local.jsonc npm run admin:init:cloudflare
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https%3A%2F%2Fgithub.com%2Fjiangbo202%2Fpaixu)
 
-Cloudflare 的部署流程可创建并绑定所需资源。首次部署后，仍需从部署者终端初始化管理员。当前版本不使用 R2，无需开通对象存储。免费额度受套餐限制，超额可能计费。以官方 [Workers 限制](https://developers.cloudflare.com/workers/platform/limits/)、[D1 计价](https://developers.cloudflare.com/d1/platform/pricing/)为准。
+无需提前 Fork，按钮会引导登录、创建仓库副本及部署。Cloudflare 的部署流程可创建并绑定所需资源，数据库迁移通过 `npm run deploy` 执行（使用 `DB` 绑定名，支持修改数据库名称）。如安装页面要求 `ADMIN_SETUP_KEY`，请按下面的要求填写；也可部署后在控制台添加。当前版本不使用 R2，无需开通对象存储。免费额度受套餐限制，超额可能计费。以官方 [Workers 限制](https://developers.cloudflare.com/workers/platform/limits/)、[D1 计价](https://developers.cloudflare.com/d1/platform/pricing/)为准。
+
+### 通过网页初始化管理员（推荐）
+
+1. 部署完成后，在 Cloudflare 打开 **Workers & Pages → 当前 Worker → Settings → Variables and Secrets → Add**。
+2. 类型选择 **Secret**，名称填写 `ADMIN_SETUP_KEY`。使用密码管理器生成 **32–256 位、无空白字符的随机字符串**作为值，自行保存；不要使用文档示例、短口令或公开字符串。
+3. 点击 **Deploy** 使配置生效。
+4. 打开网站 **`/admin`**，输入安装密钥，并输入两次 **12–128 个字符**的管理员密码。
+5. 创建成功后，使用刚设置的管理员密码登录。可在 Cloudflare 控制台删除 `ADMIN_SETUP_KEY` 并部署，后续登录不依赖它。
+
+整个过程只需浏览器，不用克隆仓库或运行本地命令。使用 HTTPS 访问；Secret 保存后控制台无法再次查看原文，只能重新设置。初始化前若丢失安装密钥，可直接在控制台替换；没有配置有效 Secret 时，网页不能创建管理员。
+
+**已有管理员的站点会继续使用原密码或管理员密钥。** 网页初始化只执行一次；即使保留、重新添加或更换 `ADMIN_SETUP_KEY`，也不能覆盖已有管理员或重置密码。管理员密码只保存带随机盐的验证值，不会返回给浏览器；安装密钥不写入数据库、前端文件或日志。命令行初始化仍可使用。
 
 ## 管理员与用量统计
 
@@ -246,6 +257,7 @@ Node / Docker 启动时自动初始化 SQLite；Cloudflare 发布前须应用待
 | `PUBLIC_ORIGIN` | 公开 HTTPS 站点源，供反向代理部署使用 |
 | `TRUST_PROXY_IPS` | 明确可信的代理 IP，默认不信任任何代理 |
 | `CF_D1_DATABASE_NAME` | 管理员脚本使用的 D1 名称，默认 `paixu-db` |
+| `ADMIN_SETUP_KEY` | 首次网页安装的私密校验密钥；Cloudflare 使用 Secret，Node 可通过环境变量注入；默认禁用网页初始化 |
 | `WRANGLER_CONFIG` | 管理员初始化 / 重置脚本使用的配置文件 |
 
 项目不自动读取 `.env`；Node 环境变量由 shell、进程管理器或 Compose 注入。Wrangler 本地开发可读取 `.dev.vars`。

@@ -23,3 +23,10 @@ test('ranking metrics, quota messages and password forms are bilingual',()=>{
  setLanguage('en');for(const phrase of copy)assert.doesNotMatch(t(phrase),/[\u3400-\u9fff]/,phrase);
  setLanguage('zh');assert.equal(t('Current administrator password is incorrect'),'原管理员密码不正确。');
 });
+
+test('browser-only administrator setup is bilingual', () => {
+  const copy = ['正在检查管理员状态…', '重新检查', '初始化管理员', '使用部署者设置的安装密钥，创建管理员密码。', '安装密钥', '管理员密码', '再次输入管理员密码', '创建管理员', '如何配置安装密钥', '尚未配置有效的安装密钥，请由部署者在控制台设置。', '密码需 12–128 个字符。初始化仅限一次；完成后使用管理员密码登录。', '管理员已创建，请使用新密码登录。安装密钥现已失效，可在 Cloudflare 控制台删除。'];
+  setLanguage('en'); for (const phrase of copy) assert.doesNotMatch(t(phrase), /[\u3400-\u9fff]/, phrase);
+  setLanguage('zh'); for (const phrase of copy) assert.equal(t(phrase), phrase);
+  assert.equal(t('Invalid installation key'), '安装密钥错误。');
+});

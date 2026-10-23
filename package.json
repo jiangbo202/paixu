@@ -11,12 +11,17 @@
     "build": "node scripts/build.mjs",
     "test": "node --test tests/*.test.mjs",
     "dev:cloudflare": "wrangler dev",
-    "deploy": "npm run build && wrangler d1 migrations apply paixu-db --remote && wrangler deploy",
+    "deploy": "npm run build && wrangler d1 migrations apply DB --remote && wrangler deploy",
     "upgrade:local": "node scripts/upgrade-local.mjs",
     "admin:init": "node scripts/admin.mjs init",
     "admin:reset": "node scripts/admin.mjs reset",
     "admin:init:cloudflare": "node scripts/admin.mjs init --cloudflare",
     "admin:reset:cloudflare": "node scripts/admin.mjs reset --cloudflare"
+  },
+  "cloudflare": {
+    "bindings": {
+      "ADMIN_SETUP_KEY": { "description": "First installation only: use a password manager to generate a random 32–256-character key without whitespace. Save it securely, then open /admin to create your administrator password. This key cannot change an existing administrator password and may be deleted after setup." }
+    }
   },
   "devDependencies": { "wrangler": "4.151.3" }
 }

@@ -166,12 +166,11 @@ Put the returned D1 `database_id` in the **same** `wrangler.production.local.jso
 npm run build
 npx wrangler d1 migrations apply paixu-db --remote --config wrangler.production.local.jsonc
 npx wrangler deploy --config wrangler.production.local.jsonc --keep-vars --strict
-WRANGLER_CONFIG=wrangler.production.local.jsonc npm run admin:init:cloudflare
 ```
 
-The key appears only in the deployer's terminal, never on a public setup page or in build logs. Sign in at **/admin**. `npm run deploy` uses the default `wrangler.jsonc`; use it only when that file is correctly configured. Custom configurations must be passed to both migration and deployment commands as above.
+After deployment, configure the installation Secret as described below and open **/admin** to create an administrator password without local initialization. Alternatively, run `WRANGLER_CONFIG=wrangler.production.local.jsonc npm run admin:init:cloudflare`; the generated administrator key appears only once in the owner’s terminal. `npm run deploy` uses the default `wrangler.jsonc`; use it only when that file is correctly configured. Custom configurations must be passed to both migration and deployment commands as above.
 
-If you add a custom domain in the dashboard, preserve its `routes` in the deployment configuration. `--keep-vars` preserves dashboard variables; it does **not** replace domain binding configuration. If you rename the database, update the CLI database name in `scripts/admin.mjs` as well.
+If you add a custom domain in the dashboard, preserve its `routes` in the deployment configuration. `--keep-vars` preserves dashboard variables; it does **not** replace domain binding configuration. The administrator CLI defaults to `paixu-db`; set `CF_D1_DATABASE_NAME` if you use another database name.
 
 ### One-click deployment
 
@@ -179,7 +178,19 @@ Click the button below to deploy this project to your own Cloudflare account:
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https%3A%2F%2Fgithub.com%2Fjiangbo202%2Fpaixu)
 
-Cloudflare's deployment flow can provision and bind resources. Administrator initialization still takes place from the deployer's terminal afterward. R2 is no longer needed. Free allowances depend on the plan, and overages may be billed: see official [Workers limits](https://developers.cloudflare.com/workers/platform/limits/) and [D1 pricing](https://developers.cloudflare.com/d1/platform/pricing/).
+No manual Fork is required: the flow guides you through sign-in, repository creation and deployment. Cloudflare can provision and bind resources; `npm run deploy` applies D1 migrations using the `DB` binding, including when the database is renamed. If prompted for `ADMIN_SETUP_KEY`, supply a key as described below, or add it in the dashboard after deployment. R2 is no longer needed. Free allowances depend on the plan, and overages may be billed: see official [Workers limits](https://developers.cloudflare.com/workers/platform/limits/) and [D1 pricing](https://developers.cloudflare.com/d1/platform/pricing/).
+
+### Browser-only administrator setup (recommended)
+
+1. After deployment, open **Workers & Pages → your Worker → Settings → Variables and Secrets → Add** in Cloudflare.
+2. Select **Secret** and name it `ADMIN_SETUP_KEY`. Use a password manager to generate a random **32–256-character value without whitespace** and save it securely. Do not use public examples or short passwords.
+3. Select **Deploy** to activate the Secret.
+4. Open **`/admin`** on your site, enter the installation key, and enter your chosen **12–128-character** administrator password twice.
+5. Sign in with the new password. You can then delete `ADMIN_SETUP_KEY` in Cloudflare and deploy; normal sign-in does not depend on it.
+
+This requires only a browser, with no local clone or commands. Use HTTPS. Cloudflare hides Secret values after saving; replace a lost installation key in the dashboard before initialization. Web initialization is disabled unless a valid Secret is configured.
+
+**Existing administrators keep their current password or generated administrator key.** Web setup runs once: retaining, replacing or adding `ADMIN_SETUP_KEY` cannot overwrite an existing administrator or reset their password. Only a salted password verifier is stored. The installation key is never stored in the database, frontend files or logs. CLI initialization remains available.
 
 ## Administration and analytics
 
@@ -239,6 +250,8 @@ Node/Docker initialize SQLite on startup. Apply pending D1 database migrations b
 | `DB_PATH` | `./data/paixu.sqlite`; `/data/paixu.sqlite` in Docker |
 | `PUBLIC_ORIGIN` | Public HTTPS origin for reverse-proxy deployments |
 | `TRUST_PROXY_IPS` | Explicit trusted proxy addresses; none by default |
+| `ADMIN_SETUP_KEY` | Private first-time web setup key. Use a Cloudflare Secret or inject a Node environment variable; web setup is disabled by default |
+| `CF_D1_DATABASE_NAME` | D1 name used by the administrator CLI; defaults to `paixu-db` |
 | `WRANGLER_CONFIG` | Configuration used by administrator initialization/reset scripts |
 
 The application does not load `.env` automatically. Inject Node variables through the shell, a process manager or Compose. Wrangler local development can load `.dev.vars`.
