@@ -175,11 +175,9 @@ If you add a custom domain in the dashboard, preserve its `routes` in the deploy
 
 ### One-click deployment
 
-Publish your own public GitHub repository, replace `YOUR_ACCOUNT` / `YOUR_REPO` below with its actual path, and add the resulting button to its README:
+Click the button below to deploy this project to your own Cloudflare account:
 
-```markdown
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https%3A%2F%2Fgithub.com%2FYOUR_ACCOUNT%2FYOUR_REPO)
-```
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https%3A%2F%2Fgithub.com%2Fjiangbo202%2Fpaixu)
 
 Cloudflare's deployment flow can provision and bind resources. Administrator initialization still takes place from the deployer's terminal afterward. R2 is no longer needed. Free allowances depend on the plan, and overages may be billed: see official [Workers limits](https://developers.cloudflare.com/workers/platform/limits/) and [D1 pricing](https://developers.cloudflare.com/d1/platform/pricing/).
 

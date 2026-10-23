@@ -181,11 +181,9 @@ WRANGLER_CONFIG=wrangler.production.local.jsonc npm run admin:init:cloudflare
 
 ### 一键部署按钮
 
-先把本项目推送到你自己的公开 GitHub 仓库，然后将以下模板中的 `YOUR_ACCOUNT`、`YOUR_REPO` 替换成实际仓库，再放入 README：
+点击下方按钮，将本项目部署到你自己的 Cloudflare 账号：
 
-```markdown
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https%3A%2F%2Fgithub.com%2FYOUR_ACCOUNT%2FYOUR_REPO)
-```
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https%3A%2F%2Fgithub.com%2Fjiangbo202%2Fpaixu)
 
 Cloudflare 的部署流程可创建并绑定所需资源。首次部署后，仍需从部署者终端初始化管理员。当前版本不使用 R2，无需开通对象存储。免费额度受套餐限制，超额可能计费。以官方 [Workers 限制](https://developers.cloudflare.com/workers/platform/limits/)、[D1 计价](https://developers.cloudflare.com/d1/platform/pricing/)为准。
 
