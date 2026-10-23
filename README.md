@@ -265,3 +265,4 @@ Node / Docker 启动时自动初始化 SQLite；Cloudflare 发布前须应用待
 `engine.js`、`rules.js`、`modes.js`、`six-seat.js` 由浏览器与服务器共用；`backend/api.js` 负责验证，`backend/sqlite.mjs` 和 `worker.js` 适配 Node 与 Cloudflare。构建仅复制允许的前端文件，并先清空旧 `dist/`。
 
 CI 执行测试、构建、依赖审计、Workers 打包检查、Docker 构建及 Git 历史密钥扫描。安全边界、私密配置排除规则和漏洞报告方式见 [SECURITY.md](SECURITY.md)。服务端校验能阻止直接改分和非法动作，不保证识别自动化玩家或抵御所有资源耗尽攻击。
+
