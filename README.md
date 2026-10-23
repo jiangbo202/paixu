@@ -221,7 +221,7 @@ npx wrangler secret put CF_ANALYTICS_TOKEN --config wrangler.production.local.js
 
 Token 不在网页中输入、展示或保存。统计由已登录管理员请求，服务端合并请求并缓存最长 5 分钟；Workers / D1 为今日 UTC，数据库存储取最近快照。页面区分项目与账号总量；缺权限、失败或无快照显示不可用，不冒充零用量。本地部署只显示真实 SQLite 逻辑大小。
 
-## 开发、升级与安全检查
+## 开发与安全检查
 
 ```sh
 npm ci
@@ -239,7 +239,7 @@ npx wrangler d1 migrations apply paixu-db --local
 npm run dev:cloudflare
 ```
 
-Node / Docker 启动时自动初始化 / 升级 SQLite；Cloudflare 发布前须应用待执行迁移。**3.0 的 `0008_paixu_reset.sql` 会删除旧玩家、对局、成绩、会话和旧表**，保留管理员密码验证值、游戏参数和排名开关；榜单名额重新使用默认 20。迁移可重复运行，之后的新数据不会被重复清空。旧版 0001–0007 已合并为这一份初始化 / 升级迁移，空库可直接应用；旧 D1 中的迁移登记无需删除。
+Node / Docker 启动时自动初始化 SQLite；Cloudflare 发布前须应用待执行的 D1 数据库迁移。操作现有数据库前请先备份。
 
 | 环境变量 | 默认值 / 用途 |
 | --- | --- |
@@ -255,33 +255,3 @@ Node / Docker 启动时自动初始化 / 升级 SQLite；Cloudflare 发布前须
 `engine.js`、`rules.js`、`modes.js`、`six-seat.js` 由浏览器与服务器共用；`backend/api.js` 负责验证，`backend/sqlite.mjs` 和 `worker.js` 适配 Node 与 Cloudflare。构建仅复制允许的前端文件，并先清空旧 `dist/`。
 
 CI 执行测试、构建、依赖审计、Workers 打包检查、Docker 构建及 Git 历史密钥扫描。安全边界、私密配置排除规则和漏洞报告方式见 [SECURITY.md](SECURITY.md)。服务端校验能阻止直接改分和非法动作，不保证识别自动化玩家或抵御所有资源耗尽攻击。
-
-## 品牌与旧版本升级
-
-项目名称统一为 **牌序 · PAIXU**，npm / 新 Worker 名称为 `paixu-web`，新 D1 名称为 `paixu-db`，本地数据库为 `paixu.sqlite`。浏览器使用 `paixu-web.*` 存储键，Cookie 使用 `paixu_guest` / `paixu_admin`。六席玩法 ID 为 `six-seat`，卡牌 ID 使用 `ss-`，对应实现为 `six-seat.js`。
-
-所有应用表使用 `paixu_` 前缀：`paixu_players`、`paixu_runs`、`paixu_scores`、`paixu_configs`、`paixu_meta`、`paixu_site_settings`、`paixu_mode_epochs`、`paixu_admin_sessions`、`paixu_rate_limits`。玩家关联字段为 `player_id`，昵称字段为 `display_name`，公开 API 使用 `displayName`；不再含头像字段。
-
-本次允许清空历史，因此不导入旧浏览器存档。更新后使用新存储空间、重新开始对局；语言和声音偏好也恢复默认。管理员需要重新登录，原密码验证值仍可通过同库迁移保留。
-
-旧 Node 数据库先停止服务，再执行以下一次性命令。将 `previous.sqlite` 换成实际旧文件；目标文件若已存在，脚本会拒绝覆盖：
-
-```sh
-npm run upgrade:local -- ./data/previous.sqlite
-npm run dev
-```
-
-Docker 同样先停止服务，挂载原卷执行（容器内的路径按实际旧文件填写）：
-
-```sh
-docker compose stop game
-docker compose build
-docker compose run --rm game npm run upgrade:local -- /data/previous.sqlite
-docker compose up --build -d
-```
-
-Cloudflare 若继续使用现有 D1，在原生产配置上应用 `0008` 并部署；如要同时改远程资源名，新建 `paixu-db` / `paixu-web`，绑定新 ID 并重新初始化管理员。数据库 ID 不能靠修改配置里的名称更换；自定义域名、Secret 和 Analytics 标识也需对应新 Worker。仓库模板已统一命名，本机旧生产配置不会被自动重写或发布。
-
-头像功能与上传接口已删除，服务器不创建头像目录，也不绑定或查询 R2。旧本地头像目录、旧 R2 桶及旧 Worker 应在新版本上线后由部署者删除；它们不随代码更新自动从云端消失。外部备份和恢复副本也有独立的保留周期。
-
-改名不提供原作内容或商标的授权，也不代表已完成商标注册或全面检索。

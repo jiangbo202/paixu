@@ -215,7 +215,7 @@ Set these identifiers in the same configuration's `vars`, then redeploy:
 
 Tokens are not entered, shown or saved in the web UI. Authenticated administrators trigger server-side analytics, coalesced and cached for up to five minutes. Workers/D1 cover today in UTC, while database storage uses the latest snapshot. Project and account totals are distinct. Missing permissions, failures and absent snapshots remain unavailable rather than becoming zero. Local deployments show actual SQLite logical size only.
 
-## Development, upgrades and security
+## Development and security
 
 ```sh
 npm ci
@@ -233,7 +233,7 @@ npx wrangler d1 migrations apply paixu-db --local
 npm run dev:cloudflare
 ```
 
-Node/Docker initialize or upgrade SQLite on startup. Cloudflare requires pending migrations before deployment. Version 3.0 deliberately clears legacy player history; see the upgrade section below.
+Node/Docker initialize SQLite on startup. Apply pending D1 database migrations before deploying to Cloudflare. Back up an existing database before making changes.
 
 | Variable | Default / purpose |
 | --- | --- |
@@ -248,26 +248,3 @@ The application does not load `.env` automatically. Inject Node variables throug
 Browser and server share `engine.js`, `rules.js`, `modes.js` and `six-seat.js`. `backend/api.js` validates actions; `backend/sqlite.mjs` and `worker.js` adapt Node and Cloudflare. Builds clear stale `dist/` contents and copy only allowlisted frontend files.
 
 CI runs tests, builds, dependency audits, Worker packaging, Docker builds and Git-history secret scanning. See [SECURITY.md](SECURITY.md) for boundaries and reporting. Server validation rejects direct score changes and illegal moves; it does not guarantee bot detection or complete protection against resource exhaustion.
-## PAIXU 3.0 and existing installations
-
-Names are now unified: **牌序 · PAIXU**, `paixu-web` (package / new Worker), `paixu-db` (new D1), `paixu.sqlite` (local database), `paixu-web.*` (browser storage), and `paixu_guest` / `paixu_admin` (cookies). Six-seat uses the `six-seat` mode ID, `ss-` joker IDs and `six-seat.js`.
-
-Application tables all use the `paixu_` prefix. Players live in `paixu_players`; related rows use `player_id`, names use `display_name`, and public APIs expose `displayName`. No image fields or upload endpoints remain.
-
-**Migration `0008_paixu_reset.sql` clears previous players, runs, scores, sessions and legacy tables.** It retains owner password verifiers, game rules and the ranking switch; the per-board limit resets to 20. This single migration replaces 0001–0007 for fresh installations and upgrades. Existing D1 migration records need not be deleted. Reapplying it preserves all new PAIXU data.
-
-Stop the server before moving an existing local database to the new default filename:
-
-```sh
-npm run upgrade:local -- ./data/previous.sqlite
-```
-
-Replace the source with its actual path. The command refuses to overwrite an existing destination. Docker users should stop the service, rebuild the image and run the command in a container mounting the original data volume, using the database's `/data/` path. Fresh databases require normal administrator initialization.
-
-Existing Cloudflare installations can apply `0008` to their original D1 and redeploy using their actual resource names. To rename remote resources too, provision a new `paixu-db` / `paixu-web`, bind the new database ID and initialize the owner again. Update custom domains, Secrets and Analytics identifiers accordingly. Changing a name in configuration does not change a database's identity. The public template uses PAIXU names; existing private production configuration is not automatically overwritten or deployed. Admin scripts accept `CF_D1_DATABASE_NAME` (default `paixu-db`).
-
-Previous browser saves and preferences are not imported. New runs use the new storage namespace. Owner sessions must sign in again after upgrading.
-
-The application no longer creates image directories, binds R2 or queries object-storage analytics. Remove retired upload directories, R2 buckets and old Workers after the replacement deployment is running. Code updates do not delete cloud resources or external backups.
-
-Renaming does not grant rights to original content or marks, and does not constitute trademark clearance.
